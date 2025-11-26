@@ -1,30 +1,40 @@
-import { createServer } from "node:http";
+import { createServer } from 'node:http';
+import { Router } from './router.mjs';
+import { customRequest } from './custom-request.mjs';
+import { customResponse } from './custom-response.mjs';
 
-// const frase1 = Promise.resolve('Olá');
-// const frase2 = Promise.resolve('Mundo');
-// const frasesPromises = [frase1, frase2];
+const router = new Router();
+router.get('/', (req, res) => {
+	res.status(200).end('Home');
+});
 
-// console.log(frasesPromises);
-// const frases = [];
-// for await (const frase of frasesPromises){
-//     frases.push(frase);
-// }
-// console.log(frases.join(", "));
+router.get('/contato', (req, res) => {
+	res.status(200).end('Contato.');
+});
+
+router.post('/produto/notebook', (req, res) => {
+	res.status(200).end('Produtos -Notebook');
+});
+
+router.post('/produto', (req, res) => {
+	const cor = req.query.get('cor');
+	res.end(`Produto cadastrado: ${cor}`);
+});
 
 const server = createServer(async (request, response) => {
-    const url = new Url(request.url, 'https://friendly-palm-tree-jwgxpwwr47qfpg4r-3000.app.github.dev/');
+	const req = await customRequest(request);
+	const res = customResponse(response);
+	const handler = router.find(req.method, req.pathname);
 
-    const chunks = [];
-    for await (const chuck of request){
-        chunks.push(chuck);
-    }
+	console.log(handler);
 
-    const body = Buffer.concat(chunks).toString('utf-8');
-    console.log(request.method)
-    response.statusCode = 404;
-    response.end('Não encontrada.')
+	if (handler) {
+		handler(req, res);
+	} else {
+		res.status(404).end('Não encontrada.');
+	}
 });
 
 server.listen(3000, () => {
-    console.log('Server iniciado...')
+	console.log('Server: http://localhost:3000');
 });
